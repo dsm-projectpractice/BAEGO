@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스토리보드 - 이동현 (PM & Backend)</title>
+<style>
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Regular.woff') format('woff');
+  font-weight: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Bold.woff') format('woff');
+  font-weight: 700; font-display: swap;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'GounBatang', serif; background: #fff; color: #222; font-size: 12px; line-height: 1.7; max-width: 210mm; margin: 0 auto; padding: 40px 50px; }
+h1 { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+h2 { font-size: 13px; font-weight: 700; border-bottom: 1px solid #222; margin-top: 24px; margin-bottom: 8px; padding-bottom: 3px; }
+h3 { font-size: 12px; font-weight: 700; margin-top: 14px; margin-bottom: 6px; }
+p { font-size: 12px; margin-bottom: 6px; }
+.meta { text-align: center; color: #666; font-size: 11px; margin-bottom: 24px; line-height: 1.8; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+th { background: #f0f0f0; font-size: 12px; font-weight: 700; padding: 6px 8px; border: 1px solid #ccc; text-align: left; }
+td { padding: 6px 8px; border: 1px solid #ccc; font-size: 12px; vertical-align: top; line-height: 1.7; }
+tr:nth-child(even) td { background: #fafafa; }
+.box-info { background: #f8f8ff; border: 1px solid #99c; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-warn { background: #fff8f8; border: 1px solid #e99; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-neutral { background: #f9f9f9; border: 1px solid #ddd; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+code { font-family: Consolas, monospace; font-size: 11px; background: #f5f5f5; padding: 1px 4px; border: 1px solid #ddd; }
+.footer { border-top: 1px solid #ccc; margin-top: 40px; padding-top: 8px; text-align: right; font-size: 11px; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>스토리보드</h1>
+<div class="meta">
+  네이버 API 기반 위치 기반 식사 추천 서비스 (Web-view App)<br>
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; 학번/이름: 3110 / 이동현 &nbsp;|&nbsp; 담당: PM &amp; Backend &nbsp;|&nbsp; ver 1.0
+</div>
+
+<h2>1. 시스템 구성 개요</h2>
+<div class="box-info">
+  클라이언트(WebView) - 프록시 서버(Node.js/Express) - MySQL(사용자 데이터) / Redis(캐시) - Naver API의 구조로 동작한다.
+  모든 Naver API 요청은 프록시 서버를 경유하며, API 키는 서버 .env에서만 관리된다.
+</div>
+<table>
+  <thead><tr><th>계층</th><th>구성 요소</th><th>역할</th></tr></thead>
+  <tbody>
+    <tr><td>클라이언트</td><td>WebView App (React + Flutter)</td><td>UI 렌더링, GPS 수집, 사용자 인터랙션</td></tr>
+    <tr><td>프록시 서버</td><td>Node.js + Express</td><td>API 키 보안, CORS, Rate Limit, 데이터 가공, DB 연동</td></tr>
+    <tr><td>MySQL</td><td>tbl_users, tbl_user_preferences, tbl_selection_history, tbl_favorites</td><td>사용자 데이터 영구 저장</td></tr>
+    <tr><td>Redis</td><td>Redis 7.x</td><td>Naver API 응답 캐시, Rate Limit 카운터</td></tr>
+    <tr><td>외부 API</td><td>Naver Search / Maps / Reverse Geocoding</td><td>식당 원천 데이터 실시간 조회</td></tr>
+  </tbody>
+</table>
+
+<h2>2. SC-B-01 | 앱 시작 및 사용자 식별</h2>
+<div class="box-neutral">최초 실행 시 device_id를 tbl_users에 등록하고, 이후 실행부터는 기존 사용자 데이터(선호도 등)를 로드한다.</div>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:18%">액터</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>클라이언트</td><td>앱 실행 - device_id 생성 또는 로컬 저장값 로드</td><td>UUID v4 형식</td></tr>
+    <tr><td>2</td><td>프록시 서버</td><td>POST /api/users - device_id로 tbl_users UPSERT</td><td>신규: INSERT / 기존: last_active_at 갱신</td></tr>
+    <tr><td>3</td><td>MySQL</td><td>tbl_users 저장 완료 - user_id 반환</td><td></td></tr>
+    <tr><td>4</td><td>프록시 서버</td><td>tbl_user_preferences 조회 - 선호도 로드</td><td>신규 사용자: 기본값으로 자동 생성</td></tr>
+    <tr><td>5</td><td>클라이언트</td><td>선호도 기반 필터 초기값 설정 후 홈 화면 진입</td><td></td></tr>
+  </tbody>
+</table>
+
+<h2>3. SC-B-02 | 위치 수집 및 식당 조회</h2>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:18%">액터</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>클라이언트</td><td>GPS 권한 허용 - 위경도 수집</td><td>navigator.geolocation.getCurrentPosition()</td></tr>
+    <tr><td>2</td><td>프록시 서버</td><td>GET /api/geocode - Naver Reverse Geocoding 호출</td><td>Redis 캐시 우선 조회</td></tr>
+    <tr><td>3</td><td>프록시 서버</td><td>GET /api/restaurants - 사용자 선호도 파라미터 적용</td><td>tbl_user_preferences 기반 기본 필터 적용</td></tr>
+    <tr><td>4</td><td>Redis</td><td>캐시 HIT 시 즉시 반환 / MISS 시 Naver API 호출 후 캐시 저장</td><td>TTL: 30분</td></tr>
+    <tr><td>5</td><td>클라이언트</td><td>식당 목록 표시</td><td></td></tr>
+  </tbody>
+</table>
+
+<h2>4. SC-B-03 | 식당 선택 및 이력 저장</h2>
+<div class="box-info">식당 선택 시 tbl_selection_history에 이력을 저장하여 개인화 추천의 기반 데이터로 활용한다.</div>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:18%">액터</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>클라이언트</td><td>식당 카드 탭 - 선택 이력 전송 요청</td><td>POST /api/history</td></tr>
+    <tr><td>2</td><td>프록시 서버</td><td>tbl_selection_history INSERT</td><td>user_id, place_id, place_name, category, region, selected_at</td></tr>
+    <tr><td>3</td><td>프록시 서버</td><td>네이버 플레이스 딥링크 URL 반환</td><td>클라이언트가 딥링크 호출</td></tr>
+    <tr><td>4</td><td>프록시 서버</td><td>비동기: 카테고리별 선택 빈도 집계 후 tbl_user_preferences 갱신</td><td>선호 카테고리 자동 업데이트</td></tr>
+  </tbody>
+</table>
+
+<h2>5. SC-B-04 | 즐겨찾기 추가/삭제</h2>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:18%">액터</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>클라이언트</td><td>즐겨찾기 버튼 탭</td><td>POST /api/favorites</td></tr>
+    <tr><td>2</td><td>프록시 서버</td><td>tbl_favorites INSERT - uq_user_place 중복 체크</td><td>중복 시 409 Conflict 반환</td></tr>
+    <tr><td>3a</td><td>MySQL</td><td>INSERT 성공 - 201 Created 반환</td><td></td></tr>
+    <tr><td>3b</td><td>MySQL</td><td>중복 시 DELETE - 즐겨찾기 해제</td><td>토글 방식: 이미 있으면 삭제</td></tr>
+    <tr><td>4</td><td>클라이언트</td><td>즐겨찾기 아이콘 상태 토글 (채움/빈)</td><td></td></tr>
+  </tbody>
+</table>
+
+<h2>6. SC-B-05 | 에러 처리 및 Rate Limit</h2>
+<div class="box-warn">Naver API 쿼터 초과 시 stale 캐시를 우선 반환하여 서비스 연속성을 유지한다.</div>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:18%">액터</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Naver API</td><td>일일 쿼터 초과 - 429 Too Many Requests</td><td></td></tr>
+    <tr><td>2</td><td>프록시 서버</td><td>Redis stale 캐시 반환 (TTL 만료 후 24시간 이내)</td><td></td></tr>
+    <tr><td>3</td><td>프록시 서버</td><td>캐시도 없을 경우 503 반환</td><td>{ error: "service_unavailable" }</td></tr>
+    <tr><td>4</td><td>프록시 서버</td><td>Rate Limit: 동일 IP 분당 30회 초과 시 429 반환</td><td>Redis ratelimit 키 기반</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; ver 1.0 &nbsp;|&nbsp; 작성자: 이동현(3110) &nbsp;|&nbsp; 담당: PM &amp; Backend / Infra
+</div>
+</body>
+</html>
