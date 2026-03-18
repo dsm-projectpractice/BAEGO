@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>요구사항명세서 - 김시우 (Frontend 기능/연동)</title>
+<style>
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Regular.woff') format('woff');
+  font-weight: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Bold.woff') format('woff');
+  font-weight: 700; font-display: swap;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'GounBatang', serif; background: #fff; color: #222; font-size: 12px; line-height: 1.7; max-width: 210mm; margin: 0 auto; padding: 40px 50px; }
+h1 { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+h2 { font-size: 13px; font-weight: 700; border-bottom: 1px solid #222; margin-top: 24px; margin-bottom: 8px; padding-bottom: 3px; }
+h3 { font-size: 12px; font-weight: 700; margin-top: 14px; margin-bottom: 6px; }
+p { font-size: 12px; margin-bottom: 6px; }
+.meta { text-align: center; color: #666; font-size: 11px; margin-bottom: 24px; line-height: 1.8; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+th { background: #f0f0f0; font-size: 12px; font-weight: 700; padding: 6px 8px; border: 1px solid #ccc; text-align: left; }
+td { padding: 6px 8px; border: 1px solid #ccc; font-size: 12px; vertical-align: top; line-height: 1.7; }
+tr:nth-child(even) td { background: #fafafa; }
+.box-info { background: #f8f8ff; border: 1px solid #99c; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-warn { background: #fff8f8; border: 1px solid #e99; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-neutral { background: #f9f9f9; border: 1px solid #ddd; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+code { font-family: Consolas, monospace; font-size: 11px; background: #f5f5f5; padding: 1px 4px; border: 1px solid #ddd; }
+.high { color: #c00; font-weight: 700; }
+.med { color: #660; font-weight: 700; }
+.low { color: #080; font-weight: 700; }
+.two-col { display: flex; gap: 20px; margin: 10px 0; }
+.two-col > div { flex: 1; }
+.footer { border-top: 1px solid #ccc; margin-top: 40px; padding-top: 8px; text-align: right; font-size: 11px; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>요구사항명세서</h1>
+<div class="meta">
+  네이버 API 기반 위치 기반 식사 추천 서비스 (Web-view App)<br>
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; 학번/이름: 3102 / 김시우 &nbsp;|&nbsp; 담당: Frontend (기능/연동) &nbsp;|&nbsp; ver 1.2
+</div>
+
+<h2>1. 앱 시작 및 사용자 식별 요구사항</h2>
+<div class="box-info">앱 시작 시 device_id 기반으로 사용자를 서버에 등록하고, tbl_user_preferences에서 선호도를 불러와 전역 상태를 초기화한다.</div>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-F-01</td><td>앱 최초 실행 시 UUID v4 형식의 device_id를 생성하여 <code>localStorage</code>에 저장한다. 이후 실행에서는 저장된 값을 재사용한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-02</td><td>앱 진입 시 POST /api/users { device_id }를 호출한다. 응답에서 받은 user_id를 <code>userStore</code>에 저장하고 이후 모든 API 요청에 사용한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-03</td><td>GET /api/users/{device_id}/preferences를 호출하여 서버 선호도(category, radius, sort)를 <code>filterStore</code> 초기값으로 설정한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-04</td><td>필터 바텀 시트의 "선호도로 저장" 탭 시 PATCH /api/users/{user_id}/preferences를 호출하여 현재 filterStore 값을 서버에 저장한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h2>2. 위치 수집 및 식당 조회 요구사항</h2>
+<div class="box-warn">프론트엔드는 Naver API를 직접 호출하지 않는다. 모든 외부 API 요청은 반드시 프록시 서버(/api/*)를 경유한다.</div>
+
+<h3>2-1. Geolocation 요구사항</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-F-05</td><td>HTML5 <code>navigator.geolocation.getCurrentPosition()</code> API를 사용하여 사용자 위경도를 수집한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-06</td><td>위치 수집 timeout은 10초로 설정하며, 초과 시 TimeoutError 처리 흐름으로 진입한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-07</td><td>PermissionDenied / PositionUnavailable / Timeout 에러 유형별로 분기 처리하며, 각각 적합한 안내 메시지를 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-08</td><td>GPS 거부 또는 타임아웃 시 수동 지역 입력 fallback UI를 제공한다. 수동 입력된 지역명은 검색 API 파라미터로 전달된다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-09</td><td>위치 수집 로직은 <code>useGeolocation</code> 커스텀 훅으로 분리 구현한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-10</td><td>좌표 값은 Zustand <code>locationStore</code>에 저장하여 전역에서 접근 가능하도록 한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h3>2-2. API 연동 요구사항 (Axios)</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-F-11</td><td>Axios 인스턴스를 생성하여 <code>baseURL</code>(프록시 서버 URL)을 환경변수(<code>VITE_API_URL</code>)로 관리한다. 컴포넌트에서 직접 URL 하드코딩 금지.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-12</td><td>Axios Request Interceptor에서 공통 헤더(Content-Type 등)를 설정한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-13</td><td>Axios Response Interceptor에서 4xx/5xx 에러를 공통 처리한다. 503 응답 시 재시도 없이 에러 상태로 전환한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-14</td><td>네트워크 오류(NetworkError) 발생 시 1회 자동 재시도 후 실패 처리한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-15</td><td>API 응답 수신 전 로딩 중 스켈레톤 UI를 표시한다. 응답 수신 후 실제 데이터로 교체한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-16</td><td>필터 값 변경 시 API를 즉시 재호출한다. 이전 요청이 진행 중이면 AbortController로 취소한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-17</td><td>Reverse Geocoding 응답에서 추출한 행정동 이름을 헤더에 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h2>3. 식당 선택 및 이력 저장 요구사항</h2>
+
+<h3>3-1. 선택 이력 저장</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-F-18</td><td>식당 카드 탭 시 POST /api/history { user_id, place_id, place_name, category, region }를 호출한다. 딥링크 호출과 병렬 처리(fire-and-forget)하며 응답을 UI에 반영하지 않는다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-19</td><td>이력 저장 API 호출 실패 시 에러를 콘솔에만 기록한다. 사용자 화면에 에러를 표시하지 않는다. (딥링크 흐름을 방해하지 않음)</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h3>3-2. 딥링크 / WebView Bridge</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-F-32</td><td>식당 카드 탭 시 <code>naverLink</code>를 사용하여 네이버 플레이스로 연결한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-33</td><td>Android에서는 <code>intent://</code> 스킴, iOS에서는 <code>nmap://</code> universal link 방식으로 분기 처리한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-34</td><td>네이버 앱 미설치 시 <code>window.location.href</code>로 모바일 웹 URL fallback 처리한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-35</td><td>WebView JavaScript Bridge 인터페이스를 정의한다. Flutter/RN 팀원과 사전 합의한 규격을 사용한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-36</td><td>Bridge 미지원 환경(일반 브라우저)에서는 <code>window.open()</code>으로 직접 처리한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h2>4. 즐겨찾기 관리 요구사항</h2>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-F-20</td><td>즐겨찾기 탭 진입 시 GET /api/favorites/{user_id}를 호출하여 tbl_favorites 목록을 불러온다. 결과를 <code>favoritesStore</code>에 저장한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-21</td><td>즐겨찾기 추가 시 POST /api/favorites { user_id, place_id, place_name, category, naver_link }를 호출한다. Optimistic Update를 적용하여 UI를 먼저 변경한 후 API 요청을 처리한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-22</td><td>즐겨찾기 삭제 시 DELETE /api/favorites/{favorite_id}를 호출한다. Optimistic Update를 적용하며, 실패 시 rollback 처리한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-23</td><td>POST /api/favorites에서 409 Conflict 응답 시 이미 등록된 것으로 간주하고 favoritesStore 상태를 유지한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-24</td><td>홈 화면의 즐겨찾기 아이콘은 favoritesStore의 place_id 목록을 구독하여 채움/빈 상태를 실시간 반영한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h2>5. 상태 관리 요구사항 (Zustand)</h2>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-F-25</td><td>Zustand를 전역 상태 관리 라이브러리로 사용한다. Context API / props drilling 사용 금지.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-26</td><td>액션 기반 상태 업데이트 패턴을 강제한다. 컴포넌트에서 store 상태를 직접 변경하지 않는다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-27</td><td>사용자 정보(user_id)와 선호도는 <code>userStore</code>에서 관리한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-28</td><td>필터 상태(category, radius, sort)는 <code>filterStore</code>에서 단일 관리한다. 초기값은 서버 선호도에서 설정한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-29</td><td>식당 목록 데이터, 로딩 상태, 에러 상태는 <code>restaurantStore</code>에서 관리한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-30</td><td>위치 정보(lat, lng, region)와 에러는 <code>locationStore</code>에서 관리한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-F-31</td><td>즐겨찾기 목록은 <code>favoritesStore</code>에서 관리한다. Optimistic Update 지원을 위한 pending 상태를 포함한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h3>Zustand Store 구조 설계</h3>
+<div class="two-col">
+  <div>
+    <table>
+      <thead><tr><th colspan="3">userStore</th></tr><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>userId</td><td>number | null</td><td>서버 user_id</td></tr>
+        <tr><td>deviceId</td><td>string</td><td>localStorage UUID</td></tr>
+        <tr><td>preferences</td><td>UserPreferences | null</td><td>서버 선호도</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <table>
+      <thead><tr><th colspan="3">locationStore</th></tr><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>lat</td><td>number | null</td><td>위도</td></tr>
+        <tr><td>lng</td><td>number | null</td><td>경도</td></tr>
+        <tr><td>region</td><td>string | null</td><td>행정동 이름</td></tr>
+        <tr><td>status</td><td>'idle'|'loading'|'success'|'error'</td><td>수집 상태</td></tr>
+        <tr><td>error</td><td>string | null</td><td>에러 코드</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="two-col">
+  <div>
+    <table>
+      <thead><tr><th colspan="3">filterStore</th></tr><tr><th>필드</th><th>타입</th><th>기본값</th></tr></thead>
+      <tbody>
+        <tr><td>category</td><td>'전체'|'한식'|'중식'|'일식'|'양식'</td><td>'전체'</td></tr>
+        <tr><td>radius</td><td>500 | 1000 | 2000</td><td>1000</td></tr>
+        <tr><td>sort</td><td>'distance'|'rating'</td><td>'distance'</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <table>
+      <thead><tr><th colspan="3">restaurantStore</th></tr><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>restaurants</td><td>Restaurant[]</td><td>식당 목록</td></tr>
+        <tr><td>total</td><td>number</td><td>전체 결과 수</td></tr>
+        <tr><td>isLoading</td><td>boolean</td><td>로딩 중 여부</td></tr>
+        <tr><td>error</td><td>string | null</td><td>에러 메시지</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="two-col">
+  <div>
+    <table>
+      <thead><tr><th colspan="3">favoritesStore</th></tr><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>favorites</td><td>Favorite[]</td><td>즐겨찾기 목록</td></tr>
+        <tr><td>isLoading</td><td>boolean</td><td>로딩 중 여부</td></tr>
+        <tr><td>error</td><td>string | null</td><td>에러 메시지</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <table>
+      <thead><tr><th colspan="3">Favorite 타입</th></tr><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>favoriteId</td><td>number</td><td>tbl_favorites PK</td></tr>
+        <tr><td>placeId</td><td>string</td><td>Naver 플레이스 ID</td></tr>
+        <tr><td>placeName</td><td>string</td><td>식당명</td></tr>
+        <tr><td>category</td><td>string</td><td>카테고리</td></tr>
+        <tr><td>naverLink</td><td>string</td><td>딥링크 URL</td></tr>
+        <tr><td>createdAt</td><td>string</td><td>등록일 (ISO 8601)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="two-col">
+  <div>
+    <table>
+      <thead><tr><th colspan="3">Restaurant 타입</th></tr><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>string</td><td>Naver 플레이스 ID</td></tr>
+        <tr><td>name</td><td>string</td><td>식당명</td></tr>
+        <tr><td>category</td><td>string</td><td>카테고리</td></tr>
+        <tr><td>distance</td><td>number</td><td>거리 (m)</td></tr>
+        <tr><td>naverLink</td><td>string</td><td>딥링크 URL</td></tr>
+        <tr><td>region</td><td>string</td><td>행정동</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <table>
+      <thead><tr><th colspan="3">UserPreferences 타입</th></tr><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>preferredCategory</td><td>string</td><td>선호 카테고리</td></tr>
+        <tr><td>preferredRadius</td><td>number</td><td>선호 반경 (m)</td></tr>
+        <tr><td>preferredSort</td><td>string</td><td>정렬 기준</td></tr>
+        <tr><td>dislikedCategories</td><td>string[]</td><td>기피 카테고리 목록</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2>6. 비기능 요구사항</h2>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th></tr></thead>
+  <tbody>
+    <tr><td>NFR-F-01</td><td>모든 비동기 API 요청은 로딩/성공/에러 3가지 상태를 반드시 처리한다. 빈 화면(white screen) 노출 금지.</td><td><span class="high">필수</span></td></tr>
+    <tr><td>NFR-F-02</td><td>Lighthouse 기준 Performance 점수 80점 이상 목표. (배포 전 측정)</td><td><span class="med">권장</span></td></tr>
+    <tr><td>NFR-F-03</td><td>TypeScript strict mode 활성화. <code>any</code> 타입 사용 금지.</td><td><span class="high">필수</span></td></tr>
+    <tr><td>NFR-F-04</td><td>프론트엔드 환경변수(<code>VITE_API_URL</code> 등)는 <code>.env</code> 파일로 관리하며 Git에 커밋하지 않는다.</td><td><span class="high">필수</span></td></tr>
+    <tr><td>NFR-F-05</td><td>GPS 권한 거부·타임아웃, API 오류, WebView 딥링크 실패 등 모든 예외 케이스에 대한 UI 처리를 완성한다.</td><td><span class="high">필수</span></td></tr>
+  </tbody>
+</table>
+
+<h3>기술적 리스크 및 해결 전략</h3>
+<table>
+  <thead><tr><th style="width:18%">구분</th><th style="width:35%">리스크</th><th>해결 전략</th></tr></thead>
+  <tbody>
+    <tr><td>초기화 순서</td><td>사용자 등록(POST /api/users) 전에 다른 API 요청이 발생하여 user_id 미설정 상태 오류</td><td>앱 진입 시 userStore 초기화를 await로 처리. user_id가 설정된 이후에만 하위 API 요청 허용</td></tr>
+    <tr><td>즐겨찾기 동기화</td><td>홈 화면 카드 아이콘과 즐겨찾기 탭 목록 간 상태 불일치</td><td>favoritesStore를 단일 진실 공급원으로 사용. 홈 카드 즐겨찾기 아이콘은 favoritesStore.favorites를 구독</td></tr>
+    <tr><td>GPS 권한 UX</td><td>진입 시 즉시 권한 요청으로 사용자 이탈 및 브라우저 정책 제한</td><td>권한 요청 시점을 사용자 액션 이후로 설정, GPS 거부·타임아웃 시 수동 주소 입력 fallback UI 제공</td></tr>
+    <tr><td>WebView 딥링크</td><td>외부 앱 호출 시 intent/url scheme 처리 미흡으로 앱 미설치 상황 대응 실패</td><td>Android는 intent://, iOS는 universal link 방식으로 분기 처리, fallback URL로 모바일 웹 연결 설정</td></tr>
+    <tr><td>API 응답 오류</td><td>네트워크 불안정 또는 API 장애 시 빈 화면 노출</td><td>Axios interceptor 기반 오류 처리, 재시도(retry) 로직 및 스켈레톤 UI 적용으로 사용자 경험 유지</td></tr>
+    <tr><td>상태 관리</td><td>필터·위치·추천 데이터 간 상태 불일치</td><td>Zustand 중앙 스토어로 전역 상태 단일화, 액션 기반 상태 업데이트 패턴 강제</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; ver 1.2 &nbsp;|&nbsp; 작성자: 김시우(3102) &nbsp;|&nbsp; 담당: Frontend (기능/API 연동)
+</div>
+</body>
+</html>
