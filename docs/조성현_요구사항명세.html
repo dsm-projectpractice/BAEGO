@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>요구사항명세서 - 조성현 (Frontend UI/UX)</title>
+<style>
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Regular.woff') format('woff');
+  font-weight: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Bold.woff') format('woff');
+  font-weight: 700; font-display: swap;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'GounBatang', serif; background: #fff; color: #222; font-size: 12px; line-height: 1.7; max-width: 210mm; margin: 0 auto; padding: 40px 50px; }
+h1 { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+h2 { font-size: 13px; font-weight: 700; border-bottom: 1px solid #222; margin-top: 24px; margin-bottom: 8px; padding-bottom: 3px; }
+h3 { font-size: 12px; font-weight: 700; margin-top: 14px; margin-bottom: 6px; }
+p { font-size: 12px; margin-bottom: 6px; }
+.meta { text-align: center; color: #666; font-size: 11px; margin-bottom: 24px; line-height: 1.8; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+th { background: #f0f0f0; font-size: 12px; font-weight: 700; padding: 6px 8px; border: 1px solid #ccc; text-align: left; }
+td { padding: 6px 8px; border: 1px solid #ccc; font-size: 12px; vertical-align: top; line-height: 1.7; }
+tr:nth-child(even) td { background: #fafafa; }
+.box-info { background: #f8f8ff; border: 1px solid #99c; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-warn { background: #fff8f8; border: 1px solid #e99; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-neutral { background: #f9f9f9; border: 1px solid #ddd; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+code { font-family: Consolas, monospace; font-size: 11px; background: #f5f5f5; padding: 1px 4px; border: 1px solid #ddd; }
+.high { color: #c00; font-weight: 700; }
+.med { color: #660; font-weight: 700; }
+.low { color: #080; font-weight: 700; }
+.footer { border-top: 1px solid #ccc; margin-top: 40px; padding-top: 8px; text-align: right; font-size: 11px; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>요구사항명세서</h1>
+<div class="meta">
+  네이버 API 기반 위치 기반 식사 추천 서비스 (Web-view App)<br>
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; 학번/이름: 3114 / 조성현 &nbsp;|&nbsp; 담당: Frontend (UI/UX) &nbsp;|&nbsp; ver 1.2
+</div>
+
+<!-- ===== 섹션 1 ===== -->
+<h2>1. 앱 시작 및 사용자 식별 요구사항</h2>
+
+<div class="box-info">
+  앱 최초 진입 시 스플래시 화면을 노출하는 동시에 백그라운드에서 <code>device_id</code> 기반 사용자 등록 API(<code>POST /api/users</code>)를 호출한다.
+  UI는 API 완료 여부와 무관하게 최소 0.5초 후 다음 화면으로 전환한다.
+</div>
+
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-U-01</td><td>앱 진입 시 로고와 앱명을 중앙에 표시하는 스플래시 화면을 0.5초 이상 노출한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-02</td><td>스플래시 화면은 로고 페이드인 애니메이션을 적용한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-03</td><td>스플래시 노출 중 <code>POST /api/users</code> 호출이 진행됨을 사용자가 인지하지 못하도록 별도 로딩 인디케이터를 표시하지 않는다. (백그라운드 처리)</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 섹션 2 ===== -->
+<h2>2. 위치 수집 및 식당 조회 요구사항</h2>
+
+<div class="box-warn">
+  진입 즉시 위치 권한을 요청하면 사용자 이탈률이 높아진다. 반드시 사전 안내 화면을 거친 뒤 권한을 요청해야 한다.
+</div>
+
+<h3>2-1. 위치 권한 요청 화면</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-U-04</td><td>위치 권한 요청 전, 권한이 필요한 이유를 설명하는 안내 화면을 표시한다. (진입 시 즉시 권한 요청 금지)</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-05</td><td>권한 거부 시 수동 지역 입력 fallback UI를 제공한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-06</td><td>권한 거부 후 재요청을 위한 안내 텍스트 및 버튼을 제공한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h3>2-2. 홈 화면 (추천 목록)</h3>
+<div class="box-info">
+  위치 수집 완료 후 <code>GET /api/restaurants</code>를 호출하여 추천 목록을 표시한다.
+  로딩·에러·정상 세 가지 상태를 각각 UI로 표현한다.
+</div>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-U-07</td><td>상단 헤더에 현재 위치 행정동 이름을 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-08</td><td>데이터 로딩 중에는 스켈레톤 UI를 표시하여 레이아웃 흔들림을 방지한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-09</td><td>식당 카드에 식당명, 카테고리, 거리를 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-10</td><td>식당 카드에 즐겨찾기 아이콘 버튼을 표시한다. 현재 즐겨찾기 여부에 따라 채움/빈 아이콘으로 토글 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-11</td><td>"다른 식당 추천" 버튼 탭 시 현재 목록을 셔플하여 다른 식당을 우선 노출한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-12</td><td>API 에러 시 에러 상태 UI (메시지 + 재시도 버튼)를 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h3>2-3. 필터 바텀 시트</h3>
+<div class="box-info">
+  필터 칩 탭 시 슬라이드업 바텀 시트를 표시한다. 초기값은 <code>tbl_user_preferences</code>에서 불러온 사용자 선호도로 설정한다.
+</div>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-U-13</td><td>필터 칩 탭 시 바텀 시트가 슬라이드업 애니메이션으로 표시된다. 초기값은 서버에서 불러온 <code>tbl_user_preferences</code> 값으로 설정한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-14</td><td>거리(500m/1km/2km), 카테고리(전체/한식/중식/일식/양식), 정렬(거리순/평점순) 선택 UI를 제공한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-15</td><td>"적용" 버튼 탭 시 바텀 시트 닫힘 후 필터 적용된 목록으로 즉시 갱신한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-16</td><td>"선호도로 저장" 버튼 탭 시 현재 필터 값을 <code>PATCH /api/users/{user_id}/preferences</code>로 전송하여 <code>tbl_user_preferences</code>에 저장한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-17</td><td>"초기화" 버튼으로 필터를 기본값으로 되돌린다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-18</td><td>바텀 시트 외부 영역 탭 또는 드래그 다운으로 닫힌다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 섹션 3 ===== -->
+<h2>3. 식당 선택 및 이력 저장 요구사항</h2>
+
+<div class="box-info">
+  사용자가 식당 카드를 탭하는 순간 두 가지 동작이 동시에 수행된다.
+  <br>① <code>POST /api/history</code> 호출로 선택 이력을 서버에 저장
+  <br>② <code>naver_link</code>를 통해 네이버 플레이스 딥링크 호출
+  <br>두 동작은 독립적으로 처리되며, 딥링크 실패 시 별도 에러 메시지를 표시한다.
+</div>
+
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-U-19</td><td>식당 카드 탭 시 <code>naver_link</code>로 네이버 플레이스 딥링크를 호출하고, <code>POST /api/history</code>를 통해 선택 이력을 서버에 저장한다. (두 동작 병렬 처리)</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-20</td><td>딥링크 호출 시 앱 미설치 등으로 실패할 경우 사용자에게 안내 메시지를 표시한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-21</td><td>이력 저장(<code>POST /api/history</code>) 실패는 사용자에게 노출하지 않고 백그라운드에서 처리한다. (사용자 경험 우선)</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 섹션 4 ===== -->
+<h2>4. 즐겨찾기 관리 요구사항</h2>
+
+<div class="box-info">
+  <code>tbl_favorites</code>에 저장된 즐겨찾기 목록을 표시한다. 홈 화면 카드의 즐겨찾기 아이콘과 즐겨찾기 화면은 동일한 <code>favoritesStore</code>를 구독하여 상태를 동기화한다.
+</div>
+
+<h3>4-1. 즐겨찾기 화면</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-U-22</td><td>즐겨찾기 탭 진입 시 <code>GET /api/favorites/{user_id}</code>를 호출하여 <code>tbl_favorites</code> 목록을 불러온다. 등록일 최신순으로 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-23</td><td>즐겨찾기 카드에 식당명, 카테고리, 등록일을 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-24</td><td>즐겨찾기 카드 탭 시 <code>naver_link</code>로 네이버 플레이스 딥링크를 호출한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-25</td><td>즐겨찾기 카드의 해제 버튼 탭 시 <code>DELETE /api/favorites/{favorite_id}</code>를 호출하고 목록에서 즉시 제거한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-26</td><td>즐겨찾기 목록이 비어 있을 경우 빈 상태 UI(안내 텍스트)를 표시한다.</td><td><span class="med">권장</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<h3>4-2. 하단 탭 바</h3>
+<div class="box-neutral">
+  하단 탭 바는 앱 전역 내비게이션을 담당하며, 즐겨찾기 화면과 홈 화면 간 전환을 제공한다.
+</div>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th><th style="width:10%">상태</th></tr></thead>
+  <tbody>
+    <tr><td>FR-U-27</td><td>하단 탭 바에 홈 / 즐겨찾기 / 선호도 3개 탭을 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-28</td><td>현재 활성 탭 아이콘 및 레이블을 강조 표시한다.</td><td><span class="high">필수</span></td><td>TODO</td></tr>
+    <tr><td>FR-U-29</td><td>즐겨찾기 탭에 미확인 즐겨찾기 추가 건수 배지를 표시한다. (선택 사항)</td><td><span class="low">선택</span></td><td>TODO</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 섹션 5 ===== -->
+<h2>5. 공통 컴포넌트 요구사항</h2>
+
+<div class="box-neutral">
+  컴포넌트 라이브러리를 우선 구축한 후 각 화면에 적용하는 순서로 개발한다. UI 일관성 유지를 위해 공통 컴포넌트 외 임의 인라인 스타일 사용을 지양한다.
+</div>
+
+<table>
+  <thead><tr><th style="width:20%">컴포넌트</th><th>요구 기능</th><th style="width:10%">우선순위</th></tr></thead>
+  <tbody>
+    <tr><td>RestaurantCard</td><td>식당명 (최대 2줄 말줄임), 카테고리 태그, 거리 텍스트, 즐겨찾기 아이콘 버튼 (토글), 탭 인터랙션, 스켈레톤 variant</td><td><span class="high">필수</span></td></tr>
+    <tr><td>FavoriteCard</td><td>식당명, 카테고리 태그, 등록일, 즐겨찾기 해제 버튼, 탭 시 딥링크 호출</td><td><span class="high">필수</span></td></tr>
+    <tr><td>FilterChip</td><td>선택/미선택 스타일 구분, 단일 선택 그룹 지원, 활성 필터 수 배지 표시</td><td><span class="high">필수</span></td></tr>
+    <tr><td>BottomSheet</td><td>슬라이드업 애니메이션, 드래그 핸들, 외부 탭 닫기, 스크롤 콘텐츠 지원, "선호도로 저장" 버튼 슬롯</td><td><span class="high">필수</span></td></tr>
+    <tr><td>BottomTabBar</td><td>3개 탭 (홈/즐겨찾기/선호도), 활성 탭 강조, 라우팅 연결</td><td><span class="high">필수</span></td></tr>
+    <tr><td>LocationHeader</td><td>행정동 이름 표시, 로딩 상태 shimmer, 탭 시 위치 새로고침</td><td><span class="high">필수</span></td></tr>
+    <tr><td>ErrorState</td><td>에러 아이콘 + 메시지, 재시도 버튼, 에러 유형별 메시지 분기</td><td><span class="high">필수</span></td></tr>
+    <tr><td>LoadingSpinner</td><td>전체 화면 로딩, 인라인 로딩, 스켈레톤 리스트</td><td><span class="high">필수</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 섹션 6 ===== -->
+<h2>6. 비기능 요구사항 (UI/UX)</h2>
+
+<h3>6-1. 반응형 및 모바일 최적화</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th></tr></thead>
+  <tbody>
+    <tr><td>NFR-U-01</td><td>모바일 퍼스트 설계. 지원 해상도: 360px ~ 430px 너비 (iOS/Android 주요 기기)</td><td><span class="high">필수</span></td></tr>
+    <tr><td>NFR-U-02</td><td>Tailwind CSS Breakpoint 기준 반응형 레이아웃 적용. sm(640px) 이상에서는 2열 카드 그리드로 전환.</td><td><span class="med">권장</span></td></tr>
+    <tr><td>NFR-U-03</td><td>터치 타겟 최소 크기 44x44px 준수 (Apple HIG / Google Material 기준)</td><td><span class="high">필수</span></td></tr>
+  </tbody>
+</table>
+
+<h3>6-2. 디자인 시스템</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th></tr></thead>
+  <tbody>
+    <tr><td>NFR-U-04</td><td>Tailwind CSS 기반 디자인 토큰(색상, 폰트, 간격) 정의 및 전역 적용.</td><td><span class="high">필수</span></td></tr>
+    <tr><td>NFR-U-05</td><td>Figma 원안 대비 픽셀 검수. 주요 화면 오차 ±4px 이내.</td><td><span class="med">권장</span></td></tr>
+    <tr><td>NFR-U-06</td><td>다크모드는 MVP 범위 외. CSS 변수 기반 설계로 추후 대응 가능하도록 구성.</td><td><span class="low">선택</span></td></tr>
+  </tbody>
+</table>
+
+<h3>6-3. 접근성 및 성능</h3>
+<table>
+  <thead><tr><th style="width:12%">ID</th><th>요구사항</th><th style="width:10%">우선순위</th></tr></thead>
+  <tbody>
+    <tr><td>NFR-U-07</td><td>이미지 alt 속성 필수 입력. 버튼 aria-label 제공.</td><td><span class="med">권장</span></td></tr>
+    <tr><td>NFR-U-08</td><td>초기 페이지 LCP(Largest Contentful Paint) 2.5초 이내 목표.</td><td><span class="med">권장</span></td></tr>
+    <tr><td>NFR-U-09</td><td>애니메이션은 prefers-reduced-motion 미디어 쿼리 대응.</td><td><span class="low">선택</span></td></tr>
+  </tbody>
+</table>
+
+<h3>6-4. 기술적 리스크 및 해결 전략</h3>
+<table>
+  <thead><tr><th style="width:18%">구분</th><th style="width:35%">리스크</th><th>해결 전략</th></tr></thead>
+  <tbody>
+    <tr><td>UI 일관성</td><td>컴포넌트 간 스타일 충돌 및 디자인 불일치</td><td>Tailwind CSS 기반 디자인 토큰 정의 및 공통 컴포넌트 라이브러리 선구축, Figma 원안과의 지속적 대조 검수</td></tr>
+    <tr><td>즐겨찾기 동기화</td><td>홈 화면과 즐겨찾기 화면 간 상태 불일치 (아이콘 토글 불일치)</td><td>favoritesStore를 단일 진실 공급원으로 사용. 홈 카드의 즐겨찾기 아이콘은 favoritesStore를 구독하여 렌더링</td></tr>
+    <tr><td>GPS 권한 UX</td><td>진입 시 즉시 권한 요청으로 사용자 이탈</td><td>권한 요청 시점을 사용자 액션(버튼 클릭) 이후로 설정, 권한 거부 시 안내 화면 별도 설계</td></tr>
+    <tr><td>반응형 대응</td><td>다양한 기기 해상도에서 레이아웃 깨짐</td><td>모바일 퍼스트 설계 원칙 적용, Tailwind 반응형 Breakpoint 기준 QA 체크리스트 운영</td></tr>
+    <tr><td>API 보안</td><td>Client ID / Secret 클라이언트 노출</td><td>프론트엔드에서 직접 API 호출 금지, 백엔드 프록시 경유 방식으로 통일</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; ver 1.2 &nbsp;|&nbsp; 작성자: 조성현(3114) &nbsp;|&nbsp; 담당: Frontend (UI/UX)
+</div>
+</body>
+</html>
