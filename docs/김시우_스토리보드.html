@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스토리보드 - 김시우 (Frontend 기능/연동)</title>
+<style>
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Regular.woff') format('woff');
+  font-weight: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'GounBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Bold.woff') format('woff');
+  font-weight: 700; font-display: swap;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'GounBatang', serif; background: #fff; color: #222; font-size: 12px; line-height: 1.7; max-width: 210mm; margin: 0 auto; padding: 40px 50px; }
+h1 { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+h2 { font-size: 13px; font-weight: 700; border-bottom: 1px solid #222; margin-top: 24px; margin-bottom: 8px; padding-bottom: 3px; }
+h3 { font-size: 12px; font-weight: 700; margin-top: 14px; margin-bottom: 6px; }
+p { font-size: 12px; margin-bottom: 6px; }
+.meta { text-align: center; color: #666; font-size: 11px; margin-bottom: 24px; line-height: 1.8; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+th { background: #f0f0f0; font-size: 12px; font-weight: 700; padding: 6px 8px; border: 1px solid #ccc; text-align: left; }
+td { padding: 6px 8px; border: 1px solid #ccc; font-size: 12px; vertical-align: top; line-height: 1.7; }
+tr:nth-child(even) td { background: #fafafa; }
+.box-info { background: #f8f8ff; border: 1px solid #99c; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-warn { background: #fff8f8; border: 1px solid #e99; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+.box-neutral { background: #f9f9f9; border: 1px solid #ddd; padding: 8px 12px; margin: 8px 0; font-size: 12px; }
+code { font-family: Consolas, monospace; font-size: 11px; background: #f5f5f5; padding: 1px 4px; border: 1px solid #ddd; }
+.flow-row { display: flex; align-items: center; gap: 0; margin: 10px 0; flex-wrap: wrap; }
+.flow-box { border: 1px solid #aaa; padding: 5px 12px; font-size: 11px; font-weight: 700; background: #f9f9f9; white-space: nowrap; }
+.flow-arrow { padding: 0 6px; color: #666; font-size: 13px; }
+.footer { border-top: 1px solid #ccc; margin-top: 40px; padding-top: 8px; text-align: right; font-size: 11px; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>스토리보드</h1>
+<div class="meta">
+  네이버 API 기반 위치 기반 식사 추천 서비스 (Web-view App)<br>
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; 학번/이름: 3102 / 김시우 &nbsp;|&nbsp; 담당: Frontend (기능/연동) &nbsp;|&nbsp; ver 1.1
+</div>
+
+<h2>1. SC-F-01 | 앱 시작 및 사용자 식별</h2>
+<div class="box-info">앱 최초 실행 시 device_id를 localStorage에서 로드하거나 UUID v4로 신규 생성하고, 서버에 등록하여 user_id를 획득한다. 이후 tbl_user_preferences에서 선호도를 불러와 filterStore 초기값으로 설정한다.</div>
+
+<div class="flow-row">
+  <div class="flow-box">앱 진입</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">device_id 로드/생성</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">POST /api/users</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">userStore 저장</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">GET /api/users/{device_id}/preferences</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">filterStore 초기화</div>
+</div>
+
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>앱 초기화 모듈</td><td>localStorage에서 device_id 조회. 없으면 UUID v4 신규 생성 후 저장</td><td>최초 실행 여부 구분</td></tr>
+    <tr><td>2</td><td>Axios</td><td>POST /api/users { device_id } 요청</td><td>tbl_users UPSERT</td></tr>
+    <tr><td>3</td><td>Zustand Store</td><td>userStore.setUserId(response.user_id) 호출</td><td>이후 모든 API 요청에 user_id 사용</td></tr>
+    <tr><td>4</td><td>Axios</td><td>GET /api/users/{device_id}/preferences 요청</td><td>tbl_user_preferences 조회</td></tr>
+    <tr><td>5</td><td>Zustand Store</td><td>filterStore를 서버 선호도 값으로 초기화 (category, radius, sort)</td><td>신규 사용자: 서버 기본값(전체, 1000m, distance) 적용</td></tr>
+    <tr><td>6</td><td>앱</td><td>홈 화면 진입</td><td>선호도 기반 필터 초기값으로 식당 목록 즉시 조회</td></tr>
+  </tbody>
+</table>
+
+<h2>2. SC-F-02 | 위치 수집 및 식당 조회</h2>
+<div class="box-info">useGeolocation Hook으로 GPS 좌표를 수집하여 locationStore에 저장하고, /api/geocode로 행정동을 역지오코딩한 뒤 filterStore 구독 하에 /api/restaurants로 식당 목록을 조회한다.</div>
+
+<div class="flow-row">
+  <div class="flow-box">useGeolocation Hook</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">locationStore</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">GET /api/geocode</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">filterStore 구독</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">GET /api/restaurants</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">UI 리렌더링</div>
+</div>
+
+<h3>2-1. 정상 흐름 - 위치 수집 및 역지오코딩</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>useGeolocation Hook</td><td>훅 마운트 시 권한 요청 트리거</td><td>navigator.geolocation.getCurrentPosition()</td></tr>
+    <tr><td>2</td><td>UI</td><td>권한 요청 중 로딩 상태 표시</td><td>Zustand: status = "loading"</td></tr>
+    <tr><td>3</td><td>useGeolocation Hook</td><td>GPS 측위 성공 - { lat, lng } 수신</td><td>GeolocationPosition 객체 파싱</td></tr>
+    <tr><td>4</td><td>Zustand Store</td><td>locationStore.setLocation({ lat, lng }) 호출</td><td>전역 상태 업데이트</td></tr>
+    <tr><td>5</td><td>Axios</td><td>GET /api/geocode?lat=&amp;lng= 요청</td><td>프록시 서버 경유, Redis 캐시 우선 조회</td></tr>
+    <tr><td>6</td><td>Axios</td><td>응답 수신 { region, fullAddress }</td><td>200 OK</td></tr>
+    <tr><td>7</td><td>Zustand Store</td><td>locationStore.setRegion("역삼동") 호출</td><td>헤더 UI에 행정동 표시 반영</td></tr>
+  </tbody>
+</table>
+
+<h3>2-2. 정상 흐름 - 식당 목록 조회</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Zustand Store</td><td>filterStore: { category, radius, sort } 상태 변경 감지</td><td>필터 칩 탭 시 트리거</td></tr>
+    <tr><td>2</td><td>useRestaurants Hook</td><td>필터 상태 구독 - API 재요청 트리거</td><td>Zustand selector로 필터값 구독</td></tr>
+    <tr><td>3</td><td>Zustand Store</td><td>restaurantStore.setLoading(true)</td><td>스켈레톤 UI 표시</td></tr>
+    <tr><td>4</td><td>Axios</td><td>GET /api/restaurants?lat=&amp;lng=&amp;category=&amp;radius=&amp;sort= 요청</td><td>Axios 인스턴스 baseURL 설정</td></tr>
+    <tr><td>5</td><td>Axios</td><td>응답 수신 { restaurants: [...], total, cachedAt }</td><td>200 OK</td></tr>
+    <tr><td>6</td><td>Zustand Store</td><td>restaurantStore.setRestaurants(data.restaurants)</td><td>전역 상태 업데이트</td></tr>
+    <tr><td>7</td><td>UI</td><td>카드 리스트 리렌더링. 각 카드의 즐겨찾기 아이콘은 favoritesStore를 참조하여 채움/빈 상태 표시</td><td>React 리렌더링 트리거</td></tr>
+  </tbody>
+</table>
+
+<h3>2-3. 예외 흐름 - GPS 권한 거부 또는 타임아웃</h3>
+<div class="box-warn">GPS 권한 거부 및 타임아웃은 별도 에러 유형으로 분기 처리하며, 각각 적합한 fallback UI를 제공한다.</div>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>useGeolocation Hook</td><td>PermissionDeniedError 또는 timeout 발생</td><td>timeout 기준: 10초</td></tr>
+    <tr><td>2</td><td>Zustand Store</td><td>locationStore.setError("permission_denied")</td><td>에러 상태 전역 저장</td></tr>
+    <tr><td>3</td><td>UI</td><td>수동 지역 입력 fallback UI 렌더링</td><td>GPS 거부 안내 + 수동 입력 필드</td></tr>
+    <tr><td>4</td><td>Axios</td><td>수동 입력 지역명으로 검색 API 요청</td><td>GET /api/restaurants?region=역삼동</td></tr>
+  </tbody>
+</table>
+
+<h3>2-4. 예외 흐름 - 네트워크 오류 및 재시도</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Axios</td><td>네트워크 오류 또는 5xx 에러 발생</td><td>interceptor에서 catch</td></tr>
+    <tr><td>2</td><td>Axios Interceptor</td><td>자동 재시도 1회 (retry logic)</td><td>503일 경우 재시도 없이 바로 에러</td></tr>
+    <tr><td>3</td><td>Zustand Store</td><td>restaurantStore.setError(errorMessage)</td><td>에러 유형별 메시지 분기</td></tr>
+    <tr><td>4</td><td>UI</td><td>스켈레톤 → ErrorState 컴포넌트 전환</td><td>"재시도" 버튼 제공</td></tr>
+  </tbody>
+</table>
+
+<h2>3. SC-F-03 | 식당 선택 및 이력 저장</h2>
+<div class="box-info">식당 카드 탭 시 플랫폼에 따라 딥링크를 호출하고, 동시에 POST /api/history를 fire-and-forget으로 전송하여 tbl_selection_history에 이력을 저장한다.</div>
+
+<div class="flow-row">
+  <div class="flow-box">식당 카드 탭</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">플랫폼 감지</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">Android: intent://</div>
+  <div class="flow-arrow">/</div>
+  <div class="flow-box">iOS: nmap://</div>
+  <div class="flow-arrow">/</div>
+  <div class="flow-box">fallback URL</div>
+  <div class="flow-arrow">+</div>
+  <div class="flow-box">POST /api/history</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">tbl_selection_history INSERT</div>
+</div>
+
+<h3>3-1. 딥링크 처리 흐름</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>UI</td><td>식당 카드 탭 - naverLink 값 추출</td><td>restaurantStore에서 선택된 식당 정보</td></tr>
+    <tr><td>2</td><td>딥링크 모듈</td><td>플랫폼 감지 (Android / iOS / 기타)</td><td>navigator.userAgent 파싱</td></tr>
+    <tr><td>3a</td><td>딥링크 모듈</td><td>[Android] intent:// 스킴으로 네이버 앱 호출</td><td>intent://map.naver.com/...</td></tr>
+    <tr><td>3b</td><td>딥링크 모듈</td><td>[iOS] nmap:// universal link 호출</td><td>nmap://place?id=xxxxx</td></tr>
+    <tr><td>4</td><td>딥링크 모듈</td><td>앱 미설치 또는 딥링크 실패 시 fallback URL로 전환</td><td>window.location.href = naverLink (모바일 웹)</td></tr>
+  </tbody>
+</table>
+
+<h3>3-2. 선택 이력 저장 흐름</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>UI</td><td>식당 카드 탭 - 선택된 식당 정보 추출 (place_id, place_name, category)</td><td>restaurantStore에서 데이터 참조</td></tr>
+    <tr><td>2</td><td>Axios</td><td>POST /api/history { user_id, place_id, place_name, category, region } 요청 (비동기, 응답 대기 없이 fire-and-forget)</td><td>딥링크 호출과 병렬 처리</td></tr>
+    <tr><td>3</td><td>서버</td><td>tbl_selection_history INSERT 후 카테고리별 빈도 집계 → tbl_user_preferences.preferred_category 자동 갱신</td><td>서버 비동기 처리</td></tr>
+  </tbody>
+</table>
+
+<h2>4. SC-F-04 | 즐겨찾기 관리</h2>
+<div class="box-info">홈 화면 카드의 즐겨찾기 아이콘 탭 시 현재 상태에 따라 추가 또는 삭제를 처리한다. Optimistic Update로 UI를 먼저 변경 후 API 요청하며, 실패 시 rollback한다.</div>
+
+<div class="flow-row">
+  <div class="flow-box">즐겨찾기 아이콘 탭</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">favoritesStore 상태 확인</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">Optimistic Update</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">POST 또는 DELETE</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">성공/실패 처리</div>
+</div>
+
+<h3>4-1. 즐겨찾기 추가 흐름</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>UI</td><td>즐겨찾기 아이콘 탭 - favoritesStore에서 해당 place_id 존재 여부 확인</td><td>미등록 상태 확인</td></tr>
+    <tr><td>2</td><td>Zustand Store</td><td>favoritesStore.addOptimistic(restaurant) - 즉시 아이콘 채움 상태로 변경</td><td>Optimistic Update</td></tr>
+    <tr><td>3</td><td>Axios</td><td>POST /api/favorites { user_id, place_id, place_name, category, naver_link } 요청</td><td>tbl_favorites INSERT</td></tr>
+    <tr><td>4a</td><td>Axios</td><td>201 Created - favoritesStore.confirmAdd(favorite_id) 호출</td><td>서버 favorite_id를 store에 저장</td></tr>
+    <tr><td>4b</td><td>Axios</td><td>실패 시 favoritesStore.rollback(place_id) 호출 - 아이콘 빈 상태로 복구</td><td>409 중복은 무시 처리</td></tr>
+  </tbody>
+</table>
+
+<h3>4-2. 즐겨찾기 삭제 흐름</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>UI</td><td>즐겨찾기 아이콘 탭 - favoritesStore에서 해당 place_id의 favorite_id 조회</td><td>등록 상태 확인</td></tr>
+    <tr><td>2</td><td>Zustand Store</td><td>favoritesStore.removeOptimistic(place_id) - 즉시 아이콘 빈 상태로 변경</td><td>Optimistic Update</td></tr>
+    <tr><td>3</td><td>Axios</td><td>DELETE /api/favorites/{favorite_id} 요청</td><td>tbl_favorites DELETE</td></tr>
+    <tr><td>4a</td><td>Axios</td><td>200 OK - favoritesStore.confirmRemove(place_id) 호출</td><td>store에서 항목 완전 제거</td></tr>
+    <tr><td>4b</td><td>Axios</td><td>실패 시 favoritesStore.rollback(place_id) 호출 - 아이콘 채움 상태로 복구</td><td></td></tr>
+  </tbody>
+</table>
+
+<h2>5. SC-F-05 | 에러 처리</h2>
+<div class="box-info">Axios interceptor 중앙 집중 에러 처리, GPS 거부/타임아웃 fallback, 503/네트워크 오류 처리, WebView Bridge 연동을 통합하여 관리한다.</div>
+
+<div class="flow-row">
+  <div class="flow-box">API 요청</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">Axios Interceptor</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">에러 유형 분기</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">GPS 오류 / 503 / 네트워크 오류</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box">fallback UI / WebView Bridge</div>
+</div>
+
+<h3>5-1. Axios interceptor 에러 처리 흐름</h3>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Axios Interceptor</td><td>모든 API 응답을 response interceptor에서 일괄 수신</td><td>axios.interceptors.response.use()</td></tr>
+    <tr><td>2</td><td>Axios Interceptor</td><td>4xx 에러 - 에러 코드별 메시지 분기 처리</td><td>401: 재인증, 404: 리소스 없음</td></tr>
+    <tr><td>3</td><td>Axios Interceptor</td><td>5xx 에러 중 503 Service Unavailable - 재시도 없이 즉시 에러 반환</td><td>점검 중 안내 메시지 표시</td></tr>
+    <tr><td>4</td><td>Axios Interceptor</td><td>503 외 5xx 및 네트워크 오류 - 자동 재시도 1회 후 실패 시 에러 반환</td><td>exponential backoff 미적용 (MVP)</td></tr>
+    <tr><td>5</td><td>Zustand Store</td><td>에러 유형에 따라 해당 store의 setError() 호출</td><td>restaurantStore / locationStore 등</td></tr>
+    <tr><td>6</td><td>UI</td><td>ErrorState 컴포넌트 렌더링 - "재시도" 버튼 제공</td><td>스켈레톤 → 에러 UI 전환</td></tr>
+  </tbody>
+</table>
+
+<h3>5-2. GPS 거부/타임아웃 에러 흐름</h3>
+<div class="box-warn">GPS 권한 거부 및 타임아웃은 Axios interceptor가 아닌 useGeolocation Hook 내부에서 별도 처리한다.</div>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>useGeolocation Hook</td><td>PermissionDeniedError (code: 1) 또는 timeout (code: 3) 발생</td><td>timeout 기준: 10초</td></tr>
+    <tr><td>2</td><td>Zustand Store</td><td>locationStore.setError("permission_denied" | "timeout") 호출</td><td>에러 코드로 유형 구분</td></tr>
+    <tr><td>3</td><td>UI</td><td>수동 지역 입력 fallback UI 렌더링</td><td>GPS 거부 안내 + 수동 입력 필드</td></tr>
+    <tr><td>4</td><td>Axios</td><td>수동 입력 지역명으로 식당 검색 요청</td><td>GET /api/restaurants?region=역삼동</td></tr>
+  </tbody>
+</table>
+
+<h3>5-3. WebView JavaScript Bridge 연동</h3>
+<div class="box-neutral">WebView Bridge 규격은 Flutter/React Native 팀원과 인터페이스를 사전 합의한다. MVP에서는 Android intent://, iOS universal link 방식을 우선 구현하고, Bridge는 점진적으로 적용한다.</div>
+<table>
+  <thead><tr><th style="width:6%">Step</th><th style="width:22%">액터/모듈</th><th style="width:40%">동작</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>WebView (Flutter/RN)</td><td>앱 시작 시 JavaScript Bridge 주입</td><td>window.nativebridge 객체 등록</td></tr>
+    <tr><td>2</td><td>Web → Native</td><td>딥링크 실행 시 nativebridge.openNaver(url) 호출</td><td>네이티브 앱 레벨에서 인텐트 처리</td></tr>
+    <tr><td>3</td><td>Native → Web</td><td>GPS 좌표 변경 시 bridge.postMessage({ lat, lng }) 전달</td><td>WebView 내 JS eventListener 수신</td></tr>
+    <tr><td>4</td><td>Zustand Store</td><td>수신한 좌표로 locationStore 업데이트</td><td>화면 자동 갱신</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  작성일: 2026. 03. 06 &nbsp;|&nbsp; ver 1.1 &nbsp;|&nbsp; 작성자: 김시우(3102) &nbsp;|&nbsp; 담당: Frontend (기능/API 연동)
+</div>
+</body>
+</html>
