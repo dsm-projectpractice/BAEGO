@@ -1,0 +1,15 @@
+COMMIT_GUIDE.md
+.DS_Store
+.idea/
+.omc/
+
+# FE
+node_modules/
+dist/
+FE/node_modules/
+FE/dist/
+
+# BE
+BE/node_modules/
+BE/dist/
+BE/.env
