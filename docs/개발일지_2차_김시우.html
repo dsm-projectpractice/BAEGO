@@ -1,0 +1,195 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>학생 활동 일지 - 김시우 (2차)</title>
+<style>
+  body {
+    font-family: "Malgun Gothic", sans-serif;
+    word-wrap: break-word;
+    color: black;
+  }
+  .WordSection1 {
+    width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .title {
+    text-align: center;
+    font-size: 22.0pt;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  td {
+    border: solid black 1.0pt;
+    padding: 8px;
+    font-size: 11.0pt;
+    line-height: 1.5;
+  }
+  .header-col {
+    text-align: center;
+    font-weight: bold;
+    width: 15%;
+    background-color: #f2f2f2;
+  }
+  .content-col {
+    width: 35%;
+  }
+  .full-col {
+    width: 85%;
+  }
+  p {
+    margin: 0 0 8px 0;
+  }
+  .screenshot-placeholder {
+    background-color: #282c34;
+    color: #abb2bf;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 9pt;
+    margin: 10px 0;
+    white-space: pre-wrap;
+  }
+  .img-caption {
+    font-size: 9.0pt;
+    color: #666666;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="WordSection1">
+
+<p class="title">개발일지(2차)</p>
+
+<table>
+  <tr>
+    <td class="header-col">개발기간</td>
+    <td colspan="3" class="full-col">2026년 3월 20일 – 4월 2일</td>
+  </tr>
+  <tr>
+    <td class="header-col">학 번</td>
+    <td class="content-col" style="text-align: center;">3102</td>
+    <td class="header-col">성 명</td>
+    <td class="content-col" style="text-align: center;">김시우</td>
+  </tr>
+  <tr>
+    <td class="header-col">프로젝트 주제</td>
+    <td colspan="3" class="full-col">배고 — 위치 기반 식사 추천 서비스 (Web-view App)</td>
+  </tr>
+  <tr>
+    <td class="header-col">기능 구현 및 진행상황</td>
+    <td colspan="3" class="full-col">
+      <p><b>* 이번 주 목표 및 진행률</b></p>
+      <p>&nbsp;&nbsp;- HTML5 Geolocation API 기반 위치 감지 훅(`useGeolocation`) 개발 — 100% 완료</p>
+      <p>&nbsp;&nbsp;- 클라이언트 전역 상태 관리(Zustand) 세팅 — 100% 완료</p>
+      <p>&nbsp;&nbsp;- BE API Mock 데이터를 활용한 UI 바인딩 테스트 — 80% 완료</p>
+      <br>
+      <p><b>* 주요 개발 내용</b></p>
+      <p>&nbsp;&nbsp;<b>1. 위치 감지 커스텀 훅 개발</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- `navigator.geolocation.getCurrentPosition`을 래핑한 `useGeolocation.ts` 작성.</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- 로딩 상태, 에러 객체, 성공 시 위경도(lat, lng) 반환 구조 설계.</p>
+      <br>
+      <p>&nbsp;&nbsp;<b>2. 전역 상태 관리 구축</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- 사용자가 선택한 추천 필터(카테고리, 반경)를 관리하기 위해 Zustand store 세팅.</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- 앱 어디서나 `useFilterStore`를 통해 추천 조건을 변경할 수 있도록 구조화.</p>
+      <br>
+      <p>&nbsp;&nbsp;<b>3. Mock API 연동 테스트</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- 실제 서버 API가 완성되기 전, 백엔드 담당자와 협의한 응답 스펙대로 Mock JSON 작성.</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- Axios를 이용하여 Mock 데이터를 패치하고 UI 컴포넌트에 렌더링하는 흐름 검증 완료.</p>
+      <br>
+      <p>※ 첨부 스크린샷:</p>
+      <div class="screenshot-placeholder">
+import { create } from 'zustand';
+
+interface FilterState {
+  radius: number;
+  category: string;
+  setFilter: (radius: number, category: string) => void;
+}
+
+export const useFilterStore = create<FilterState>((set) => ({
+  radius: 1000, // 기본 1km
+  category: 'all', // 기본 전체
+  setFilter: (radius, category) => set({ radius, category }),
+}));
+      </div>
+      <p class="img-caption">[스크린샷 1] Zustand를 활용한 필터 전역 상태 관리 Store 코드</p>
+      
+      <div class="screenshot-placeholder">
+import { useState, useEffect } from 'react';
+
+export const useGeolocation = () => {
+  const [location, setLocation] = useState({ lat: 37.4979, lng: 127.0276 }); // Default: 강남역
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported');
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+      },
+      (err) => {
+        console.warn('Geolocation Error:', err.message);
+        setError(err.code === 1 ? 'PERMISSION_DENIED' : 'TIMEOUT');
+        // 강제 디폴트 위치 할당 유지
+      },
+      { timeout: 5000, maximumAge: 60000 }
+    );
+  }, []);
+
+  return { location, error };
+};
+      </div>
+      <p class="img-caption">[스크린샷 2] 에러 발생 및 타임아웃 예외 처리가 포함된 useGeolocation 커스텀 훅 구현</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="header-col">이슈 관리 및 해결 과정</td>
+    <td colspan="3" class="full-col">
+      <p><b>* 발생한 이슈 (Issue):</b></p>
+      <p>&nbsp;&nbsp;- 사용자가 모바일 기기나 브라우저에서 <b>위치 정보 접근 권한을 거부(Denied)</b>하거나 타임아웃이 발생할 경우, 앱이 로딩 화면에서 멈춰버리는 현상 발생.</p>
+      <br>
+      <p><b>* 원인 분석:</b></p>
+      <p>&nbsp;&nbsp;- `useGeolocation` 내부에서 `getCurrentPosition`의 에러 콜백(`errorCallback`)에 대한 상태 업데이트 및 예외 처리 UI(Fallback)가 구현되지 않아 무한 로딩 상태에 빠짐.</p>
+      <br>
+      <p><b>* 해결 과정 및 결과 (Resolution):</b></p>
+      <p>&nbsp;&nbsp;- 에러 콜백 함수 내에 에러 코드(`PERMISSION_DENIED`, `TIMEOUT`)별 분기 처리 추가.</p>
+      <p>&nbsp;&nbsp;- 권한 거부 시 서울 중심부(강남역)를 기본(Default) 좌표로 강제 셋업하고, "위치 권한을 허용하지 않아 기본 위치로 추천합니다"라는 Toast 메시지를 띄우도록 수정.</p>
+      <p>&nbsp;&nbsp;- API 호출 시 `timeout: 5000` 옵션을 주어 5초 이상 응답이 없으면 에러로 간주하도록 보완함. (결과: 예외 상황에서도 서비스가 멈추지 않고 정상 작동).</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="header-col">KPT 회고 및 차주 계획</td>
+    <td colspan="3" class="full-col">
+      <p><b>* Keep (유지할 점):</b></p>
+      <p>&nbsp;&nbsp;- `useGeolocation`처럼 API 로직을 Custom Hook으로 완전히 분리하여 UI 컴포넌트는 오직 렌더링에만 집중할 수 있게 설계한 점.</p>
+      <br>
+      <p><b>* Problem (문제점/아쉬운 점):</b></p>
+      <p>&nbsp;&nbsp;- 백엔드 개발이 진행됨에 따라 API 응답 포맷(특히 페이징 메타데이터)이 초기 명세와 조금씩 달라져, Mock 데이터 구조를 자주 수정해야 하는 번거로움이 발생함.</p>
+      <br>
+      <p><b>* Try (시도할 점/개선 방향):</b></p>
+      <p>&nbsp;&nbsp;- 3주차에 진행될 FE/BE API 명세 미팅에서 최종 포맷을 픽스하고, 이후에는 Axios 인터셉터를 활용하여 전역적인 에러 핸들링 구조를 마련.</p>
+      <br>
+      <p><b>* 차주(5~6주차) 개발 계획:</b></p>
+      <p>&nbsp;&nbsp;- 백엔드에서 배포된 실제 서버 API(GET /api/restaurants 등) 연동으로 교체.</p>
+      <p>&nbsp;&nbsp;- 추천된 식당 클릭 시 네이버 지도 앱 또는 모바일 웹으로 연결되는 딥링크(Deep Link) 브릿지 기능 구현.</p>
+      <p>&nbsp;&nbsp;- Axios Request/Response Interceptor 구현 및 통합 에러 처리 기능 개발.</p>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+</body>
+</html>
