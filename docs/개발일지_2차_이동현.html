@@ -1,0 +1,207 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>학생 활동 일지 - 이동현 (2차)</title>
+<style>
+  body {
+    font-family: "Malgun Gothic", sans-serif;
+    word-wrap: break-word;
+    color: black;
+  }
+  .WordSection1 {
+    width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .title {
+    text-align: center;
+    font-size: 22.0pt;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  td {
+    border: solid black 1.0pt;
+    padding: 8px;
+    font-size: 11.0pt;
+    line-height: 1.5;
+  }
+  .header-col {
+    text-align: center;
+    font-weight: bold;
+    width: 15%;
+    background-color: #f2f2f2;
+  }
+  .content-col {
+    width: 35%;
+  }
+  .full-col {
+    width: 85%;
+  }
+  p {
+    margin: 0 0 8px 0;
+  }
+  .screenshot-placeholder {
+    background-color: #282c34;
+    color: #abb2bf;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 9pt;
+    margin: 10px 0;
+    white-space: pre-wrap;
+  }
+  .img-caption {
+    font-size: 9.0pt;
+    color: #666666;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="WordSection1">
+
+<p class="title">개발일지(2차)</p>
+
+<table>
+  <tr>
+    <td class="header-col">개발기간</td>
+    <td colspan="3" class="full-col">2026년 3월 20일 – 4월 2일</td>
+  </tr>
+  <tr>
+    <td class="header-col">학 번</td>
+    <td class="content-col" style="text-align: center;">3110</td>
+    <td class="header-col">성 명</td>
+    <td class="content-col" style="text-align: center;">이동현</td>
+  </tr>
+  <tr>
+    <td class="header-col">프로젝트 주제</td>
+    <td colspan="3" class="full-col">배고 — 위치 기반 식사 추천 서비스 (Web-view App)</td>
+  </tr>
+  <tr>
+    <td class="header-col">기능 구현 및 진행상황</td>
+    <td colspan="3" class="full-col">
+      <p><b>* 이번 주 목표 및 진행률</b></p>
+      <p>&nbsp;&nbsp;- Docker 개발 환경 구성 (docker-compose.yml) — 100% 완료</p>
+      <p>&nbsp;&nbsp;- Express(NestJS) 프록시 서버 초기화 (라우터·미들웨어 구조) — 100% 완료</p>
+      <p>&nbsp;&nbsp;- Naver Search API Wrapper 모듈 — 100% 완료</p>
+      <p>&nbsp;&nbsp;- Naver Reverse Geocoding Wrapper 모듈 — 85% 완료 (행정동 파싱 로직 마무리 중)</p>
+      <p>&nbsp;&nbsp;- .env 기반 API 키 보안 설정 — 100% 완료</p>
+      <p>&nbsp;&nbsp;- API 명세서 FE 팀 최종 합의 — 75% 완료 (mock→실제 전환 시 응답 포맷 조율 진행 중)</p>
+      <br>
+      <p><b>* 주요 개발 내용</b></p>
+      <p>&nbsp;&nbsp;<b>1. Docker 개발 환경 구성</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- docker-compose.yml: Node.js 20 + Redis 7.x 컨테이너 구성 완료.</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- 팀원 로컬에서 명령어 한 줄(docker compose up)로 즉시 실행 가능한 BE 환경 제공.</p>
+      <br>
+      <p>&nbsp;&nbsp;<b>2. 프록시 서버 구조 초기화</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- NestJS 구조(Controllers, Services, Modules) 기반 초기 세팅.</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- 보안 미들웨어 helmet, cors 적용 및 express-rate-limit 초기 구조 설계.</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- dotenv 연동하여 필수 키 누락 시 서버 부트스트랩 차단 로직 적용.</p>
+      <br>
+      <p>&nbsp;&nbsp;<b>3. Naver API Wrapper 모듈</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- Naver Search API (Local) 및 Reverse Geocoding 외부 API 호출 로직을 Service 계층으로 추상화.</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- HTTP 클라이언트 타임아웃 3,000ms 설정으로 외부 API 지연이 서버 전체에 미치는 영향 방어.</p>
+      <br>
+      <p>&nbsp;&nbsp;<b>4. API 엔드포인트 1차 구현</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- GET /api/restaurants?lat=&lng=&category=&radius= (식당 조회 프록시 API)</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;- GET /api/geocode?lat=&lng= (행정동 주소 반환)</p>
+      <br>
+      <p>※ 첨부 스크린샷:</p>
+      <div class="screenshot-placeholder">
+version: '3.8'
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+      </div>
+      <p class="img-caption">[스크린샷 1] 작성된 docker-compose.yml 일부 (Node.js + Redis 환경 세팅)</p>
+      
+      <div class="screenshot-placeholder">
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+
+export const corsConfig: CorsOptions = {
+  origin: process.env.ALLOWED_ORIGIN || 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
+      </div>
+      <p class="img-caption">[스크린샷 2] CORS Preflight 문제 해결을 위해 명시적으로 설정한 CORS Config 코드</p>
+      
+      <div class="screenshot-placeholder">
+// src/middlewares/rate-limit.middleware.ts
+import rateLimit from 'express-rate-limit';
+
+export const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // Limit each IP to 30 requests per `window`
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: {
+    statusCode: 429,
+    message: 'Too many requests, please try again later.'
+  }
+});
+      </div>
+      <p class="img-caption">[스크린샷 3] 초과 요청 방어를 위해 세팅한 express-rate-limit 미들웨어 구조</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="header-col">이슈 관리 및 해결 과정</td>
+    <td colspan="3" class="full-col">
+      <p><b>* 발생한 이슈 (Issue):</b></p>
+      <p>&nbsp;&nbsp;- FE 로컬 서버(localhost:5173)에서 BE 로컬 서버(localhost:3000)로 API 호출 시 브라우저에서 <b>CORS Preflight (OPTIONS) 오류</b>가 발생하며 요청이 차단됨.</p>
+      <br>
+      <p><b>* 원인 분석:</b></p>
+      <p>&nbsp;&nbsp;- NestJS 기본 설정에서 특정 Origin을 명시하지 않았거나, 브라우저가 사전 요청(Preflight)으로 보내는 `OPTIONS` 메서드에 대한 허용 설정이 누락됨.</p>
+      <p>&nbsp;&nbsp;- `Content-Type` 등 커스텀 헤더가 포함된 요청에 대해 `Access-Control-Allow-Headers` 설정이 부족함.</p>
+      <br>
+      <p><b>* 해결 과정 및 결과 (Resolution):</b></p>
+      <p>&nbsp;&nbsp;- NestJS의 `app.enableCors()` 옵션에 객체를 주입하여 세부 설정 명시화.</p>
+      <p>&nbsp;&nbsp;- `methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']` 로 OPTIONS 메서드를 명시적으로 허용.</p>
+      <p>&nbsp;&nbsp;- `allowedHeaders`에 `Content-Type`을 추가하고, `origin` 속성을 환경변수로 관리하여 개발/운영 환경 분리.</p>
+      <p>&nbsp;&nbsp;- 결과: MDN Web Docs의 CORS 정책 문서를 참고하여 근본적인 설정을 맞췄으며, FE 팀의 로컬 API 연동 테스트가 정상적으로 통과함 (응답 200 OK 확인).</p>
+    </td>
+  </tr>
+  <tr>
+    <td class="header-col">KPT 회고 및 차주 계획</td>
+    <td colspan="3" class="full-col">
+      <p><b>* Keep (유지할 점):</b></p>
+      <p>&nbsp;&nbsp;- Docker를 통한 환경 통일. FE 팀원들이 복잡한 백엔드 설정 없이 컨테이너만 띄워서 바로 연동 테스트를 할 수 있었던 점이 개발 속도 향상에 크게 기여함.</p>
+      <p>&nbsp;&nbsp;- 외부 API 호출 로직을 Wrapper로 추상화하여, 실제 비즈니스 로직(Service 계층)에서 분리한 설계 구조.</p>
+      <br>
+      <p><b>* Problem (문제점/아쉬운 점):</b></p>
+      <p>&nbsp;&nbsp;- Rate Limit 미들웨어 설정을 적용했으나 현재 in-memory 방식을 사용 중임. EC2 배포 후 서버 프로세스가 재시작되면 카운터가 초기화되는 문제가 예상됨.</p>
+      <p>&nbsp;&nbsp;- 로깅 시스템이 `console.log`에만 의존하고 있어, 프로덕션 환경에서의 에러 추적이 어려움.</p>
+      <br>
+      <p><b>* Try (시도할 점/개선 방향):</b></p>
+      <p>&nbsp;&nbsp;- Rate Limit 카운터를 in-memory에서 Redis 기반으로 교체(`rate-limit-redis` 패키지 활용 등)하여 분산 환경 및 재시작에도 카운트가 유지되도록 구조 개선.</p>
+      <p>&nbsp;&nbsp;- `winston` 또는 `nestjs-pino` 같은 로거를 도입하여 파일 저장 및 로그 레벨 세분화 작업 진행.</p>
+      <br>
+      <p><b>* 차주(5~6주차) 개발 계획:</b></p>
+      <p>&nbsp;&nbsp;- Redis 캐싱 레이어 본격 적용 (식당 목록: TTL 30분, 역지오코딩: TTL 24시간)</p>
+      <p>&nbsp;&nbsp;- 프론트엔드에서 전달되는 필터링 파라미터(거리 500m/1km/2km, 카테고리 등) 검증 및 서버 내 데이터 가공 로직 구현</p>
+      <p>&nbsp;&nbsp;- FE 팀 실제 API 연동 지속 지원 및 응답 포맷 최종 통일, 버그 픽스</p>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+</body>
+</html>
