@@ -11,7 +11,7 @@ import { useRestaurants } from '../hooks/useRestaurants'
 
 export default function HomePage() {
   const [filterOpen, setFilterOpen] = useState(false)
-  const { address, loading: locationLoading, refresh: refreshLocation } = useGeolocation()
+  const { address, coords, loading: locationLoading, refresh: refreshLocation } = useGeolocation()
 
   const {
     category,
@@ -22,7 +22,7 @@ export default function HomePage() {
     list,
     shuffle,
     total,
-  } = useRestaurants()
+  } = useRestaurants(coords)
 
   return (
     <>

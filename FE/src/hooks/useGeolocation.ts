@@ -1,10 +1,24 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 interface GeolocationState {
   coords: { lat: number; lng: number } | null
   address: string
   loading: boolean
   error: string | null
+}
+
+const DEFAULT_COORDS = { lat: 37.4979, lng: 127.0276 }
+const GEOCODE_API_BASE = 'http://localhost:3000/api/geocode'
+
+async function fetchAddress(lat: number, lng: number): Promise<string> {
+  try {
+    const res = await fetch(`${GEOCODE_API_BASE}?lat=${lat}&lng=${lng}`)
+    if (!res.ok) return '현재 위치'
+    const data: { address: string } = await res.json()
+    return data.address || '현재 위치'
+  } catch {
+    return '현재 위치'
+  }
 }
 
 export function useGeolocation() {
@@ -24,29 +38,23 @@ export function useGeolocation() {
     setState(prev => ({ ...prev, loading: true, error: null }))
 
     navigator.geolocation.getCurrentPosition(
-      position => {
+      async position => {
         const { latitude, longitude } = position.coords
-        // 실제 서비스에서는 Naver Reverse Geocoding API 호출
-        // 현재는 mock 주소 반환
-        setState({
-          coords: { lat: latitude, lng: longitude },
-          address: '강남구 역삼동',
-          loading: false,
-          error: null,
-        })
+        const coords = { lat: latitude, lng: longitude }
+        const address = await fetchAddress(latitude, longitude)
+        setState({ coords, address, loading: false, error: null })
       },
-      _err => {
-        // 권한 거부 또는 에러 시 mock 위치 사용
-        setState({
-          coords: { lat: 37.5013, lng: 127.0397 },
-          address: '강남구 역삼동',
-          loading: false,
-          error: null,
-        })
+      async () => {
+        const address = await fetchAddress(DEFAULT_COORDS.lat, DEFAULT_COORDS.lng)
+        setState({ coords: DEFAULT_COORDS, address, loading: false, error: null })
       },
       { timeout: 8000, maximumAge: 60000 }
     )
   }, [])
+
+  useEffect(() => {
+    requestLocation()
+  }, [requestLocation])
 
   const refresh = useCallback(() => {
     setState({ coords: null, address: '', loading: false, error: null })
