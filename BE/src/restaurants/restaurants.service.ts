@@ -19,11 +19,12 @@ const CATEGORY_KEYWORD: Record<string, string> = {
   중식: '중식',
   일식: '일식',
   양식: '양식',
+  카페: '카페',
   전체: '음식점',
 };
 
 const VALID_RADIUS = [500, 1000, 2000];
-const VALID_CATEGORIES = ['전체', '한식', '중식', '일식', '양식'];
+const VALID_CATEGORIES = ['전체', '한식', '중식', '일식', '양식', '카페'];
 
 @Injectable()
 export class RestaurantsService {
