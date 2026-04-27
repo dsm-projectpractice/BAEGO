@@ -2,12 +2,9 @@ import { Heart } from 'lucide-react'
 import { AppLayout } from '../components/common/AppLayout'
 import { CompactCard } from '../components/restaurant/RestaurantCard'
 import { useFavorites } from '../contexts/FavoritesContext'
-import { mockRestaurants } from '../data/mockRestaurants'
 
 export default function FavoritesPage() {
   const { favorites } = useFavorites()
-
-  const favoriteRestaurants = mockRestaurants.filter(r => favorites.includes(r.id))
 
   return (
     <AppLayout>
@@ -22,9 +19,9 @@ export default function FavoritesPage() {
       </header>
 
       <main className="flex-1 px-4 pt-4">
-        {favoriteRestaurants.length > 0 ? (
+        {favorites.length > 0 ? (
           <div className="flex flex-col gap-2.5 pb-4">
-            {favoriteRestaurants.map(r => (
+            {favorites.map(r => (
               <CompactCard key={r.id} restaurant={r} />
             ))}
           </div>

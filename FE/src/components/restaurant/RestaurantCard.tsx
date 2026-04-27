@@ -44,7 +44,7 @@ export function HeroCard({ restaurant }: HeroCardProps) {
         )}
         {/* Favorite button on thumbnail */}
         <button
-          onClick={e => { e.stopPropagation(); toggle(restaurant.id) }}
+          onClick={e => { e.stopPropagation(); toggle(restaurant) }}
           className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center active:opacity-70"
         >
           <Heart
@@ -129,7 +129,7 @@ export function CompactCard({ restaurant }: CompactCardProps) {
       </div>
 
       <button
-        onClick={() => toggle(restaurant.id)}
+        onClick={() => toggle(restaurant)}
         className="p-1.5 active:opacity-60 flex-shrink-0"
       >
         <Heart
